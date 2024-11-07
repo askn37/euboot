@@ -32,7 +32,7 @@ It is a bare metal SDK that can be easily installed with Arduino IDE/CLI board m
 This is required if you want to build the firmware using the included Makefile.
 It is possible to output binary file using only the modernAVR SDK without using this, but the menu settings will become more complicated.
 
-> [!HINT]
+> [!TIP]
 > In a Windows environment, you cannot use `make` as is. You need to use WSL or some other method.
 
 #### UPDI compatible programmer for AVR-DU series
@@ -47,7 +47,7 @@ Install the modernAVR SDK, add Arduino-CLI and AVRDUDE 8.0 to your path, and whe
 euboot $ make all
 ```
 
-> [!HINT]
+> [!TIP]
 > If you have a `Perl5` executable, the hex/bin file contains a CRC32 for use with the `CRCSCAN` peripheral.
 
 Upload the resulting file to the target. In this example, the target is CURIOSITY NANO. This is easy because `pkobn_updi` is built in.
@@ -134,7 +134,7 @@ The first address of the USB bootloader starts at `PROGMEM_START` in the `PROGME
 |-|-|-|
 |AVR_DA/DB/DD/DU/EA/EB|PROGMEM_START + 2 bytes|0x95089361|
 
-> [!TIPS] 
+> [!TIP] 
 > `(pgm_read_dword(PROGMEM_START + 2) == 0x95089361L`
 
 |Offset|HWV=52|OP code|
