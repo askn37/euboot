@@ -150,7 +150,7 @@ int main (void) {
   Serial.begin(CONSOLE_BAUD);
   delay_millis(600);
   D1PRINTF("\n<startup>\r\n");
-  D1PRINTF("F_CPU = %d\r\n", F_CPU);
+  D1PRINTF("F_CPU = %ld\r\n", F_CPU);
   D1PRINTF("_AVR_IOXXX_H_ = " _AVR_IOXXX_H_ "\r\n");
   D1PRINTF("__AVR_ARCH__ = %d\r\n", __AVR_ARCH__);
   D1PRINTF("BOOTSIZE = %d, 0x%04X\r\n", FUSE_BOOTSIZE, _bootsize);
