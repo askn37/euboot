@@ -1,4 +1,4 @@
-# euboot -- EDBG USB bootloader for AVR-DU series
+# euboot : EDBG USB bootloader for AVR-DU series
 
 *Switching document languages* : __日本語__, [English](README.md)
 
@@ -15,17 +15,27 @@ AVR-DU シリーズは、USB 周辺機器を内蔵した唯一の modernAVR 世�
 
 これは ATMEL が USB-IF DFU 標準開発の正規メンバーであったのに対し、Microchip はそうではなかったことが一因だろう。そのため将来的に DFU サポートが提供されることはあまり期待できない。
 
-現在、AVRDUDE には USB-CDC と USB-HID という 2 つの代替ブートローダ アプローチがある。CDC (VCP) は非常によく使われているが、通信をバイトに分割して解釈しなければならず、プロトコルが複雑で遅く、SRAM 管理に多くの労力が必要であり、さらに悪いことに新しいチップのメモリを適切にサポートするには AVRDUDE に新しいパッチが必要になるなど多くの欠点があり、新規開発で選択するには、利点がほとんど見出せない。
+現在、AVRDUDE には USB-CDC と USB-HID という 2つの代替ブートローダに使えるアプローチがある。
 
-一方、USB-HID を使用したバルク転送通信は USB の専門知識が必要であるため、あまり使われていない。しかし CMSIS-DAP および EDBG プロトコルをサポートし、`jtag3updi` も処理できる [UPDI4AVR-USB](https://github.com/askn37/UPDI4AVR-USB/) が、今や手元にある。これをベースに必要な部分のみを実装し、NVM 制御を追加するのは容易いことだ。結果は良好で、フットプリント 2.5KiB の `jtag3updi` をサポートする USB ブートローダを作り出す事ができた。DFU ほど小さくはないが実用上は十分コンパクトだ。また内部オーバーヘッドが少ないため、USB Full-Speed の上限に近いメモリ読み取り速度を簡単に実現できる。
+CDC (VCP、VCOM) は多くの実装でよく使われているが、少しの利点と引き換えに多くの欠点がある。
+USBプロトコルや低階層は隠蔽され、ストリームはバイト志向なのでリードに手間がかかる。
+パケット喪失対策がない場合、不正なデータの侵入を防止できない。
+さらに悪いことに新しいチップのメモリを適切にサポートするには AVRDUDE に新しいパッチが必要になる。
+新規開発で選択するには魅力がほとんどない。
 
-## ブートローダ ファームウェアを作成するために必要なもの
+一方、USB-HID を使用したバルク転送通信は USB の専門知識が必要であるため、あまり使われていない。
+しかし CMSIS-DAP および EDBG プロトコルをサポートし、`jtag3updi` も処理できる [UPDI4AVR-USB](https://github.com/askn37/UPDI4AVR-USB/) が、今や手元にある。これをベースに必要な部分のみを実装し、NVM 制御を追加するのは容易いことだ。
+結果は良好で、フットプリント 2.5KiB の `jtag3updi` をサポートする USB ブートローダを作り出す事ができた。
+DFU ほど小さくはないが実用上は十分コンパクトだ。
+またストリームはブロック志向なので、リードライトともUSBプロトコルのネイティブスピードに比して、ほとんど速度低下が発生しない。
+
+## ブートローダーファームウェアを作成するために必要なもの
 
 これを行うには、次の環境が必要だ:
 
 #### [MultiX Zinnia Product SDK [modernAVR] @0.3.0+](https://github.com/askn37/multix-zinnia-sdk-modernAVR)
 
-Arduino IDE/CLI の ボード マネージャーで簡単にインストールできるベアメタル開発SDK。AVR-LIBC を使いやすくするさまざまなマクロを備えており、Arduino-API に近い使用感で低レベル コードを記述できる。同時に AVRDUDE 8.0+ もインストールされる。
+Arduino IDE/CLIボードマネージャで簡単にインストールできるベアメタル開発SDK。AVR-LIBCを使いやすくする各種マクロを備えており、Arduino-APIに近い感覚で低レベルコードを記述できる。AVRDUDE 8.0+も同時にインストールされる。
 
 #### [Arduino-CLI @1.0.3+](https://arduino.github.io/arduino-cli/1.0/installation/)
 
@@ -48,15 +58,18 @@ euboot $ make all
 ```
 
 > [!TIP]
-> `Perl5`実行ファイルがある場合、hex/binファイルには`CRCSCAN`周辺機器で使用するための CRC32 が埋め込まれる。
+> `Perl5`実行ファイルがある場合、hexおよびbinファイルには`CRCSCAN`周辺機器で使用するための CRC32 が埋め込まれる。
+> これを使用するように FUSEを変更すると、ブートローダー予約領域が改竄された場合、MCUの通常動作を停止することができる。
 
-生成されたファイルをターゲットにアップロードする。この例でのターゲットは CURIOSITY NANO (CNANO) だが、これには `pkobn_updi` が組み込まれているため簡単に試す事ができる。
+生成されたファイルをターゲットにアップロードする。この例でのターゲットは "CURIOSITY NANO" だが、これには `pkobn_updi` が組み込まれているため簡単に試す事ができる。
 
 ```sh
 euboot $ avrdude -cpkobn_updi -pavr64du32 -Uflash:w:hex/euboot_LF2_SF6.hex:i -Ufuses:w:hex/euboot_LF2_SF6.fuse:i
 ```
 
-アップロードが成功すると、ファームウェアはすぐに動作を開始する。CNANO のターゲット USB ポートに何も接続されていない場合、LED (PF2) は次のパターンで点滅し続ける。これはホスト PC との USB 列挙が完了していないことを意味する。
+ブートローダーのアップロードが成功すると、ユーザーアプリケーション領域はまだ空っぽなので、自己リセットを繰り返す状態になる。
+そこで `SW0(PF6)` を1回押すと、`LED(PF2)` は次のパターンで点滅を開始するだろう。
+これはホスト PC との USB 列挙がまだ完了していないことを意味する。
 
 - LED(PF2): 🟠⚫️⚫️⚫️ (USB列挙を待機中)
 
@@ -67,10 +80,10 @@ euboot $ avrdude -cpkobn_updi -pavr64du32 -Uflash:w:hex/euboot_LF2_SF6.hex:i -Uf
 準備完了？ では USB ブートローダーが正しく応答するかどうかを確認しよう。`-P` オプションの記述に注意。
 
 ```sh
-$ avrdude -Pusb:04d8:0b12 -cjtag3updi -pavr64du32 -v
+avrdude -Pusb:04d8:0b12 -cjtag3updi -pavr64du32 -v -Usib:r:-:r
 ```
 
-```text
+```console
 Avrdude version 8.0-20241010 (0b92721a)
 Copyright see https://github.com/avrdudes/avrdude/blob/main/AUTHORS
 
@@ -94,15 +107,17 @@ Silicon revision: 1.3
 
 AVR device initialized and ready to accept instructions
 Device signature = 1E 96 21 (AVR64DU32)
-
+Reading sib memory ...
+Writing 32 bytes to output file <stdout>
+AVR     P:4D:1-3M2 (EDBG.Boot.)
 Avrdude done.  Thank you.
 ```
 
-ファームウェア固有の情報は、`ICE HW バージョン` 以降にリストされる。AVRDUDE にこれらの特定情報を表示する機能がないため、項目名と内容が一致しないのは仕様だ。代わりに未使用の項目を使って表示される。
+ファームウェア固有の情報は、`ICE HW version` 以降にリストされる。AVRDUDE にこれらの特定情報を表示する機能がないため、項目名と内容が一致しないのは仕様だ。代わりに未使用の項目を使って表示される。
 
-- __ICE HW バージョン__: 常に 52。これは元々 `4` の文字コードであり、NVM コントローラーのバージョンを示す。
-- __ICE FW バージョン__: USB ブートローダのバージョンと更新番号を示す。
-- __シリアル番号__: USB デバイス製品文字列を示す。USB シリアル番号文字列は使用されないため、両方とも同じ文字列になっている。
+- __ICE HW version__: 常に 52。これは元々 `4` の文字コードであり、NVM制御器のバージョンを示す。
+- __ICE FW version__: USB ブートローダのバージョンと更新番号を示す。
+- __Serial number__: USB デバイス製品文字列を示す。USB シリアル番号文字列は使用されておらず、両方とも同じ文字列になっている。
 - __Vtarget__: VDD に供給されている現在の動作電圧を示す。
 - __PDI/UPDI clk__: これは実際の動作速度ではなく、`FUSE_BOOTSIZE` 設定から計算されたユーザー アプリケーション の プログラム開始アドレスだ。たとえば `2560` は、ユーザー アプリケーション が プログラム開始アドレス `0x0A00` から実行されることを示す。`0` の場合、必要な FUSEは正しく設定されていない。
 
@@ -111,21 +126,34 @@ Avrdude done.  Thank you.
 - LED(PF2): 🟠🟠🟠🟠 (通信中)
 
 ```sh
-$ avrdude -Pusb:04d8:0b12 -cjtag3updi -pavr64du32 -v -D -Uflash:w:USERAPP.hex:i
+# `USERAPP.ino` must be built with 'build.text_section_start=.text=0xA00'
+$ avrdude -Pusb:04d8:0b12 -cjtag3updi -pavr64du32 -v -D -Uflash:w:USERAPP.ino.hex:i
 ```
 
 同様に `-U` オプションを使用して、`eeprom`、`userrow`、および `bootrow` の書き込みと読み取りを行うことができる。
 `fuse(s)` および `lock` は読み取り専用であり、変更できない。
 
+> [!TIP]
+> 一旦 `LED(PF2)` が点灯した後に USBケーブルを抜くと、自己リセットが発生してユーザーアプリケーションの実行が開始される。
+> ブートローダー自体にはタイムアウトがないため、スケッチ書き込みを試すか、USBケーブルを抜くのがブートローダーの正規の停止方法となる。
+
 ## USB ブートローダーの有効化
 
-ユーザー アプリケーションがまだ書き込まれておらず、フラッシュが空の場合、USB ブートローダーの実行が優先されるが、ひとたび ユーザー アプリケーションが書き込まれると、USB ブートローダーはスキップされる。そうではなく USB ブートローダをアクティブにするには、`SW0(PF6)` を押したまま CNANO の電源を入れなければならない。
+USB ブートローダーの動作を活性化するにするには、`SW0 (PF6)` を押したまま AVR-DU の電源を入れなければならない。
+これに成功すると、LED は スタンバイ状態の点滅を示す。
 
-成功すると、LED が点滅してスタンバイ モードを示す。
+既定の `FUSES` 設定では、`SW0 (PF6)` はハードリセットスイッチとして機能せず、通常の GPIO 入力だ。
+これをリセットスイッチとして使用するには、ユーザーアプリケーションで必要なコードを実装しなければならない。
 
-既定の `FUSES` 設定では、`SW0(PF6)` はハード リセット スイッチとして機能せず、通常の GPIO 入力だ。これを リセット スイッチとして使用するには、ユーザー アプリケーションで必要なコードを実装しなければならない。
+ユーザーアプリケーションは、WDT 操作と SWRST 操作の 2 つのリセット方法を実装できる。
+WDTリセットは常にユーザーアプリケーションを活性化し、ブートローダー活性化スイッチを無視する
+SWRSTリセットは、ブートローダー活性化スイッチが LOW の場合に USB ブートローダを活性化する。
 
-ユーザー アプリケーションは、WDT 操作と SWRST 操作の 2 つのリセット方法を実装できる。WDT リセットは常にユーザー アプリケーションをアクティブにし、アクティブ スイッチを無視する。SWRST リセットは、アクティブ スイッチが LOW の場合に USB ブートローダをアクティブにする。
+> [!TIP]
+> "CURIOSITY NANO" で動作テストしている場合、`SW0 (PF6)`はハードリセットスイッチとしては機能しないがデバッガーは動作しているため、リモートで`UPDI`リセットを行うことができる。
+> つまり単に以下のコマンドを実行するだけだ。その前から`SW0 (PF6)`を押し下げていれば、ブートローダーが活性化される。
+> これは USBケーブルの抜き差しを省略できるので便利な方法だ。\
+> `avrdude -cpkobn_updi -pavr64du32`
 
 ## SPM スニペット
 
@@ -148,6 +176,11 @@ USB ブートローダの最初のアドレスは、`PROGMEM` 領域の `PROGMEM
 これらは BOOT 領域保護特権を使用して、CODE/APPEND および BOOTROW 領域のフラッシュを消去/書き換えるために使用できる。
 
 > 実際の使用例については、[[FlashNVM ツールリファレンス]](https://github.com/askn37/askn37.github.io/wiki/FlashNVM)を参照のこと。
+
+## Related link and documentation
+
+- [UPDI4AVR-USB](https://github.com/askn37/UPDI4AVR-USB) : OSS/OSHW Programmer for UPDI/TPI/PDI
+- [AVRDUDE](https://github.com/avrdudes/avrdude) @8.0+ （AVR-DUシリーズは8.0以降で正式サポート）
 
 ## Copyright and Contact
 

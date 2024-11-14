@@ -17,10 +17,8 @@
  */
 
 #include <avr/io.h>
-// #include <math.h>           /* sqrt() */
 #include "api/macro_api.h"  /* interrupts, initVariant */
 #include "peripheral.h"     /* import Serial (Debug) */
-// #include "configuration.h"
 #include "prototype.h"
 
 #define pinLogicPush(PIN) openDrainWriteMacro(PIN, LOW)
