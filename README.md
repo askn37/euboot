@@ -6,7 +6,7 @@
 
 - USB bootloader for AVR-DU series.
 - Uses standard USB-HID/CMSIS-DAP/EDBG protocols and is recognized as a `jtag3updi` device by AVRDUDE<=8.0.
-- Fast memory read/write speeds, close to the limits of USB Full-Speed.
+- Fast memory read/write speeds, close to the limits of USB-HID Full-Speed.
 - Footprint is less than 2.5KiB.
 
 ## Reasons for development
@@ -28,6 +28,10 @@ But now we have [UPDI4AVR-USB](https://github.com/askn37/UPDI4AVR-USB/), which s
 The result was good, and I was able to create a USB bootloader that supports `jtag3updi` with a footprint of 2.5KiB.
 It's not as small as DFU, but it's compact enough for practical use.
 Also, the stream is block-oriented, so there is almost no slowdown in either read or write compared to the native speed of the USB protocol.
+
+> [!TIP]
+> It is obvious that the footprint can be reduced to less than 2.0KiB by moving the USB descriptors and constant table to the BOOTROW area.
+> However, we have not chosen to implement it that way at present. We may make it selectable as a build option in the future.
 
 ## What you need to create the Bootloader Firmware
 
