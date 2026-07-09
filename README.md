@@ -58,7 +58,8 @@ This mainly applies to `PICKit4`. However, the most readily available and cheape
 Install the modernAVR SDK, add Arduino-CLI and AVRDUDE 8.0 to your path, and when you're ready, go to the `euboot` directory and run `make all`. The generated files will be saved in the `hex` directory.
 
 ```sh
-euboot $ make all
+cd euboot
+make all
 ```
 
 > [!TIP]
@@ -68,8 +69,10 @@ euboot $ make all
 Upload the resulting file to the target. In this example, the target is "CURIOSITY NANO". This is easy because `pkobn_updi` is built in.
 
 ```sh
-euboot $ avrdude -cpkobn_updi -pavr64du32 -Uflash:w:hex/euboot_LF2_SF6.hex:i -Ufuses:w:hex/euboot_LF2_SF6.fuse:i
+avrdude -cpkobn_updi -pavr64du32 -Uflash:w:hex/euboot_LF2_SF6.hex:i -Ufuses:w:hex/euboot_LF2_SF6.fuse:i
 ```
+> [!TIP]
+> You only need to upload the `*.fuse` file the first time you use it.
 
 After the bootloader is uploaded successfully, the user application area is still empty, so the device will repeatedly reset itself.
 If you press `SW0 (PF6)` once, the `LED (PF2)` will start flashing in the following pattern.
@@ -101,7 +104,7 @@ Programming modes     : SPM, UPDI
 Programmer type       : JTAGICE3_UPDI
 Description           : Atmel AVR JTAGICE3 in UPDI mode
 ICE HW version        : 52
-ICE FW version        : 3.72 (rel. 48)
+ICE FW version        : 3.72 (rel. 49)
 Serial number         : euboot:CMSIS-DAP:EDBG
 Vtarget               : 3.30 V
 PDI/UPDI clk          : 2560 kHz
@@ -131,7 +134,7 @@ A user application written to run from a specific address can be written to the 
 
 ```sh
 # `USERAPP.ino` must be built with 'build.text_section_start=.text=0xA00'
-$ avrdude -Pusb:04d8:0b12 -cjtag3updi -pavr64du32 -v -D -Uflash:w:USERAPP.ino.hex:i
+avrdude -Pusb:04d8:0b12 -cjtag3updi -pavr64du32 -v -D -Uflash:w:USERAPP.ino.hex:i
 ```
 
 Similarly, the `-U` option can be used to write and read `eeprom`, `userrow`, and `bootrow`.
@@ -159,6 +162,25 @@ The SWRST reset activates the USB bootloader if the bootloader activation switch
 > This is a convenient way to avoid having to unplug and replug the USB cable. \
 > `avrdude -cpkobn_updi -pavr64du32`
 
+## Activating euboot from within a sketch
+
+By combining `euboot v3.72.49`, `Multix-Zinnia-modernAVR-0.4.1`, and the [SerialUSB class](https://github.com/askn37/MacroMicroAPI_lib/blob/main/examples/USB%20for%20AVR-DU%20series/SerialUSB_Echo), euboot now automatically activates during sketch uploads from the Arduino IDE/CLI, albeit on an experimental basis.
+
+In other words, it reproduces the same behavior as the Arduino Leonardo, Yun, Micro, Every Nano, and so on.
+
+Specifically, if `SerialUSB` is in use and the serial console is capable of communication, opening and then closing the serial port at 1200 bps triggers a switch to euboot activation mode. This behavior can be verified using the sample sketch [Basic SerialUSB Demonstration with Event Display](https://github.com/askn37/MacroMicroAPI_lib/tree/9ccbe8eaa2c88be4962cbc3bb87ed13fa39cc985/examples/USB%20for%20AVR-DU%20series/SerialUSB_Echo_and_Event).
+
+To switch CPU operation directly to euboot activation mode from within your application code—without using serial communication—use the following method:
+
+```cpp
+#include <avr/io.h>
+*(uint16_t*)(RAMEND - 1) = 0; // Zero-initialize the last 2 bytes of the SRAM area
+_PROTECTED_WRITE(RSTCTRL_SWRR, 1);  // Perform a software reset
+```
+
+> [!TIP]
+> For implementations other than SerialUSB, this code needs to be integrated somewhere within the USB-CDC implementation.
+
 ## SPM snippets
 
 The first address of the USB bootloader starts at `PROGMEM_START` in the `PROGMEM` area. It contains a special magic number and the SPM snippet code.
@@ -183,6 +205,8 @@ These can be used to erase/rewrite the FLASH in the CODE/APPEND and BOOTROW area
 
 ## Related link and documentation
 
+- [MultiX Zinnia Product SDK [modernAVR]](https://github.com/askn37/multix-zinnia-sdk-modernAVR)
+  - Bundles avrdude @v8.1 starting from v0.4.0.
 - [UPDI4AVR-USB](https://github.com/askn37/UPDI4AVR-USB) : OSS/OSHW Programmer for UPDI/TPI/PDI
 - [AVRDUDE](https://github.com/avrdudes/avrdude) @8.0+ (AVR-DU series is officially supported from 8.0 onwards)
 

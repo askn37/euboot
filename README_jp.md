@@ -58,7 +58,8 @@ Arduino IDE/CLIボードマネージャで簡単にインストールできる�
 modernAVR SDKをインストールし、Arduino-CLIとAVRDUDE 8.0を実行パスに追加し、準備ができたら`euboot`ディレクトリに移動して`make all`を実行する。生成されたファイルは`hex`ディレクトリに保存される。
 
 ```sh
-euboot $ make all
+cd euboot 
+make all
 ```
 
 > [!TIP]
@@ -68,8 +69,11 @@ euboot $ make all
 生成されたファイルをターゲットにアップロードする。この例でのターゲットは "CURIOSITY NANO" だが、これには `pkobn_updi` が組み込まれているため簡単に試す事ができる。
 
 ```sh
-euboot $ avrdude -cpkobn_updi -pavr64du32 -Uflash:w:hex/euboot_LF2_SF6.hex:i -Ufuses:w:hex/euboot_LF2_SF6.fuse:i
+avrdude -cpkobn_updi -pavr64du32 -e -Uflash:w:hex/euboot_LF2_SF6.hex:i -Ufuses:w:hex/euboot_LF2_SF6.fuse:i
 ```
+
+> [!TIP]
+> `*.fuse` ファイルのアップロードは初めて使用する時だけで良い。
 
 ブートローダーのアップロードが成功すると、ユーザーアプリケーション領域はまだ空っぽなので、自己リセットを繰り返す状態になる。
 そこで `SW0(PF6)` を1回押すと、`LED(PF2)` は次のパターンで点滅を開始するだろう。
@@ -101,7 +105,7 @@ Programming modes     : SPM, UPDI
 Programmer type       : JTAGICE3_UPDI
 Description           : Atmel AVR JTAGICE3 in UPDI mode
 ICE HW version        : 52
-ICE FW version        : 3.72 (rel. 48)
+ICE FW version        : 3.72 (rel. 49)
 Serial number         : euboot:CMSIS-DAP:EDBG
 Vtarget               : 3.30 V
 PDI/UPDI clk          : 2560 kHz
@@ -131,7 +135,7 @@ Avrdude done.  Thank you.
 
 ```sh
 # `USERAPP.ino` must be built with 'build.text_section_start=.text=0xA00'
-$ avrdude -Pusb:04d8:0b12 -cjtag3updi -pavr64du32 -v -D -Uflash:w:USERAPP.ino.hex:i
+avrdude -Pusb:04d8:0b12 -cjtag3updi -pavr64du32 -v -D -Uflash:w:USERAPP.ino.hex:i
 ```
 
 同様に `-U` オプションを使用して、`eeprom`、`userrow`、および `bootrow` の書き込みと読み取りを行うことができる。
@@ -159,6 +163,26 @@ SWRSTリセットは、ブートローダー活性化スイッチが LOW の場�
 > これは USBケーブルの抜き差しを省略できるので便利な方法だ。\
 > `avrdude -cpkobn_updi -pavr64du32`
 
+## スケッチ内からの euboot 活性化
+
+`euboot v3.72.49` と `Multix-Zinnia-modernAVR-0.4.1` および [SerialUSB クラス](https://github.com/askn37/MacroMicroAPI_lib/blob/main/examples/USB%20for%20AVR-DU%20series/SerialUSB_Echo) との組み合わせで、実験的ながら Arduino IDE/CLI からのスケッチアップロードで、euboot が自動的に活性化するようになった。
+
+つまり Arduino Leonard/Yun/Micro/Every Nano 等と同様の挙動を再現する。
+
+具体的には `SerialUSB` を使用してかつシリアルコンソールが通信可能であれば、当該シリアルポートを 1200bps で開いて閉じることにより、euboot 活性化モードに切り替わる。この動作はサンプルスケッチ[SerialUSBの基本的な実演：イベント表示付き](https://github.com/askn37/MacroMicroAPI_lib/tree/9ccbe8eaa2c88be4962cbc3bb87ed13fa39cc985/examples/USB%20for%20AVR-DU%20series/SerialUSB_Echo_and_Event)で実際に確認できる。
+
+> [!TIP]
+シリアル通信を使わず、応用コード内から直接 euboot 活性化モードへ CPU動作を切り替えるには以下のようにする。
+
+```cpp
+#include <avr/io.h>
+*(uint16_t*)(RAMEND - 1) = 0;       // SRAM領域最後の2byteをゼロ初期化して
+_PROTECTED_WRITE(RSTCTRL_SWRR, 1);  // ソフトウェアリセットを実行
+```
+
+> [!TIP]
+> SerialUSB 以外の実装では、このコードを USB-CDC の何処かに組み込む必要がある。
+
 ## SPM スニペット
 
 USB ブートローダの最初のアドレスは、`PROGMEM` 領域の `PROGMEM_START` から始まる。ここには特別なマジック ナンバーと SPM スニペット コードが含まれる。
@@ -183,6 +207,8 @@ USB ブートローダの最初のアドレスは、`PROGMEM` 領域の `PROGMEM
 
 ## Related link and documentation
 
+- [MultiX Zinnia Product SDK [modernAVR]](https://github.com/askn37/multix-zinnia-sdk-modernAVR)
+  - v0.4.0+ で avrdude @v8.1 を同梱。
 - [UPDI4AVR-USB](https://github.com/askn37/UPDI4AVR-USB) : OSS/OSHW Programmer for UPDI/TPI/PDI
 - [AVRDUDE](https://github.com/avrdudes/avrdude) @8.0+ （AVR-DUシリーズは8.0以降で正式サポート）
 

@@ -192,7 +192,7 @@ namespace JTAG {
     if (_cmd == 0x02) {             /* CMD3_GET_PARAMETER */
       // D1PRINTF(" GEN_GET_PARAM=%02X:%02X:%02X\r\n", _section, _index, _length);
       if (_section == 0) {          /* SET_GET_CTXT_CONFIG */
-        /* _index == 0-5 */
+        /* _index == 0-4 */
         memcpy_P(&packet.in.data[0], &jtag_version[_index], _length);
         D1PRINTF(" VER=");
         D1PRINTHEX(&packet.in.data[0], _length);

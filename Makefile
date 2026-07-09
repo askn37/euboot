@@ -33,7 +33,7 @@ GENCRCOPT = -u -c6
 ### Make rule ###
 
 hex/$(TARGET)%.hex: build/$(TARGET)%.ino.elf
-ifneq ($(PERL),'')
+ifneq ($(PERL),)
 	@$(OBJCOPY) $(JOINING) -O binary $< build/$(TARGET)$*.tmp
 	@$(PERL) $(GENCRC) $(GENCRCOPT) -i build/$(TARGET)$*.tmp -o $@
 else

@@ -119,18 +119,24 @@ int main (void) {
   /* Known-zero required by avr-libc. */
   __asm__ __volatile__ ( "CLR __zero_reg__" );
 
+  /* Read the word value at the top of the stack. */
+  /* Normally, this should be non-zero.           */
+  uint16_t spt = *(uint16_t*)(RAMEND - 1);
+  *(uint16_t*)(RAMEND - 1) = 0;
+
   GPR_GPR0 = RSTCTRL_RSTFR; /* get reset cause */
   RSTCTRL_RSTFR = GPR_GPR0; /* clear flags */
 
-  pinControlRegister(PIN_SYS_SW0) = PORT_PULLUPEN_bm;
-
-  /* If register is zero, perform software reset */
+  /* Perform a software reset if GPR is zero */
   if (GPR_GPR0 == 0) _PROTECTED_WRITE(RSTCTRL_SWRR, 1);
+
+  pinControlRegister(PIN_SYS_SW0) = PORT_PULLUPEN_bm;
 
   _bootsize = FUSE_BOOTSIZE << 9;   /* x PROGMEM_PAGE_SIZE(512) */
 
   /* WDT restart causes user code to execute */
-  if (bit_is_set(GPR_GPR0, RSTCTRL_WDRF_bp) || digitalReadMacro(PIN_SYS_SW0)) {
+  if (bit_is_set(GPR_GPR0, RSTCTRL_WDRF_bp)
+  || (digitalReadMacro(PIN_SYS_SW0) && spt != 0)) {
     pinControlRegister(PIN_SYS_SW0) = 0;
     __asm__ __volatile__ ( "IJMP" :: "z" (_bootsize / 2) );
   }
@@ -141,10 +147,11 @@ int main (void) {
   _PROTECTED_WRITE(CLKCTRL_OSCHFCTRLA, CLKCTRL_FRQSEL_20M_gc);
 
   pinMode(PIN_SYS_LED0, OUTPUT);
-#if PIN_SYS_LED0 == PIN_PF2
+
+  /* Initialize USB peripherals after allowing sufficient stabilization time */
+#if PIN_SYS_LED0 != PIN_PF2
   digitalWriteMacro(PIN_SYS_LED0, TOGGLE);
 #endif
-  digitalWriteMacro(PIN_SYS_LED0, TOGGLE);
 
 #if defined(DEBUG)
   Serial.begin(CONSOLE_BAUD);
@@ -166,8 +173,10 @@ int main (void) {
   loop_until_bit_is_clear(WDT_STATUS, WDT_SYNCBUSY_bp);
   _PROTECTED_WRITE(WDT_CTRLA, WDT_PERIOD_1KCLK_gc);
 
+  /* Enable USB peripheral power */
   SYSCFG_VUSBCTRL = SYSCFG_USBVREG_bm;
 
+  /* Initialize USB peripherals after allowing sufficient stabilization time */
   SYS::delay_125ms();
   SYS::delay_125ms();
   USB::setup_device(true);

@@ -58,7 +58,7 @@
  *  Columns: HW_VER, FW_MAJOR, FW_MINOR, FW_RELL, FW_RELH (all 1-byte decimal)
  */
 
-#define CONFIG_SYS_FWVER { 52, 3, 72, 48, 0 }
+#define CONFIG_SYS_FWVER { 52, 3, 72, 49, 0 }
 
 /*
  * Bootloader enable switch
