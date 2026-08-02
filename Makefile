@@ -1,18 +1,31 @@
+###
+### make all
+###
+
 TARGET = euboot
 
 MF := $(MAKEFILE_LIST)
 
 ### You can change the built-in LEDs and switches here. ###
 
-BUILTIN_LA7_SF6 = --build-property "build.led_pin=-DLED_BUILTIN=PIN_PA7 -DSW_BUILTIN=PIN_PF6"
-BUILTIN_LC3_SF6 = --build-property "build.led_pin=-DLED_BUILTIN=PIN_PC3 -DSW_BUILTIN=PIN_PF6"
-BUILTIN_LF2_SF6 = --build-property "build.led_pin=-DLED_BUILTIN=PIN_PF2 -DSW_BUILTIN=PIN_PF6"
+BUILDOPT = --build-property "build.buildopt=-DNDEBUG=1" 
+BUILTIN_LA7_SF6 = $(BUILDOPT) --build-property "build.console_select=-DSerial=Serial0A -DLED_BUILTIN=PIN_PA7 -DSW_BUILTIN=PIN_PF6"
+BUILTIN_LC3_SF6 = $(BUILDOPT) --build-property "build.console_select=-DSerial=Serial1C -DLED_BUILTIN=PIN_PC3 -DSW_BUILTIN=PIN_PF6"
+BUILTIN_LF2_SF6 = $(BUILDOPT) --build-property "build.console_select=-DSerial=Serial1C -DLED_BUILTIN=PIN_PF2 -DSW_BUILTIN=PIN_PF6"
 
 ### arduino-cli @1.0.x is required. ###
 
 ACLIPATH =
 SDKURL = --additional-urls https://askn37.github.io/package_multix_zinnia_index.json
-FQBN = --fqbn MultiX-Zinnia:modernAVR:AVRDU_noloader:01_variant=22_AVR64DU32,02_clock=11_20MHz,11_BODMODE=01_disabled,12_BODLVL=BODLEVEL0,21_resetpin=02_gpio,22_updipin=01_updi,24_eeprom=01_keep,25_bootrow=01_erase,26_userrow=02_keep,27_fusefile=03_upload,51_buildopt=01_Release,52_macroapi=02_Withoutboot,53_printf=01_default,90_console_baud=14_500000bps,95_bootloader=00_woBootloader,54_console_select=03_UART1_D6_LC3
+
+# FQBN : You only need to specify the menu items that differ from the defaults.
+
+FQBN = --fqbn "MultiX-Zinnia:modernAVR:AVRDU_noloader:\
+  01_variant=22_AVR64DU32,\
+	02_clock=11_20MHz,\
+	21_resetpin=02_gpio,\
+	27_fusefile=03_upload,\
+	52_macroapi=02_Withoutboot"
 
 # If you have MPLAB installed, the executable path will already be there.
 # If not, you should specify the path to the Arduino tools.
