@@ -58,15 +58,15 @@ endif
 	ls -la hex/$(TARGET)$*.*
 
 build/$(TARGET)_LA7_SF6.ino.elf: src/$(SRCS:.cpp=.o) src/$(SRCS:.c=.o)
-	$(ACLIPATH)arduino-cli compile $(FQBN) $(BUILTIN_LA7_SF6) $(SDKURL) --build-path build --no-color
+	$(ACLIPATH)arduino-cli compile $(FQBN) $(BUILTIN_LA7_SF6) $(SDKURL) --build-path build
 	@mv -f build/$(TARGET).ino.elf $@
 
 build/$(TARGET)_LC3_SF6.ino.elf: src/$(SRCS:.cpp=.o) src/$(SRCS:.c=.o)
-	$(ACLIPATH)arduino-cli compile $(FQBN) $(BUILTIN_LC3_SF6) $(SDKURL) --build-path build --no-color
+	$(ACLIPATH)arduino-cli compile $(FQBN) $(BUILTIN_LC3_SF6) $(SDKURL) --build-path build
 	@mv -f build/$(TARGET).ino.elf $@
 
 build/$(TARGET)_LF2_SF6.ino.elf: src/$(SRCS:.cpp=.o) src/$(SRCS:.c=.o)
-	$(ACLIPATH)arduino-cli compile $(FQBN) $(BUILTIN_LF2_SF6) $(SDKURL) --build-path build --no-color
+	$(ACLIPATH)arduino-cli compile $(FQBN) $(BUILTIN_LF2_SF6) $(SDKURL) --build-path build
 	@mv -f build/$(TARGET).ino.elf $@
 
 clean:

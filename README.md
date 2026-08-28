@@ -9,6 +9,13 @@
 - Fast memory read/write speeds, close to the limits of USB-HID Full-Speed.
 - Footprint is less than 2.5KiB.
 
+### Recent Updates
+
+3.72.50 (26/08/28)
+
+- Tightened the conditions for entering Firmware Update Mode (bootloader activation).
+  - Fixed an issue where unintended behavior occurred when external resistors or capacitors were connected to the boot selection switch.
+
 ## Reasons for development
 
 The AVR-DU series is the only current AVR generation with built-in USB peripherals, but unlike previous similar products (ATMEL generations), it does not ship with a DFU bootloader and the bare metal chip flash is always empty.

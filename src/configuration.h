@@ -54,11 +54,12 @@
  *
  *  The version notifications shown here are compatible
  *  with bootloaders that support <FlashNVM.h>.
- *
- *  Columns: HW_VER, FW_MAJOR, FW_MINOR, FW_RELL, FW_RELH (all 1-byte decimal)
  */
 
-#define CONFIG_SYS_FWVER { 52, 3, 72, 49, 0 }
+#define HW_VER   52
+#define FW_MAJOR 3
+#define FW_MINOR 72
+#define FW_REL   50
 
 /*
  * Bootloader enable switch
