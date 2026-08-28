@@ -29,6 +29,8 @@
 // MARK: Work space
 
 namespace /* NAMELESS */ {
+  USED RODATA const uint8_t _usage[] =
+    "euboot " __QUOTE(FW_MAJOR) "." __QUOTE(FW_MINOR) "." __QUOTE(FW_REL);
 
   /* USB */
   alignas(2) NOINIT EP_TABLE_t EP_TABLE;
@@ -119,25 +121,32 @@ int main (void) {
   /* Known-zero required by avr-libc. */
   __asm__ __volatile__ ( "CLR __zero_reg__" );
 
-  /* Read the word value at the top of the stack. */
-  /* Normally, this should be non-zero.           */
-  uint16_t spt = *(uint16_t*)(RAMEND - 1);
-  *(uint16_t*)(RAMEND - 1) = 0;
-
   GPR_GPR0 = RSTCTRL_RSTFR; /* get reset cause */
   RSTCTRL_RSTFR = GPR_GPR0; /* clear flags */
 
+  /* Read the word value at the top of the stack. */
+  /* Normally, this should be non-zero.           */
+  bool _spt = bit_is_set(GPR_GPR0, RSTCTRL_SWRF_bp) && *(uint16_t*)(RAMEND - 1) == 0;
+
   /* Perform a software reset if GPR is zero */
   if (GPR_GPR0 == 0) _PROTECTED_WRITE(RSTCTRL_SWRR, 1);
-
-  pinControlRegister(PIN_SYS_SW0) = PORT_PULLUPEN_bm;
+  if (GPR_GPR0 == RSTCTRL_PORF_bm) {
+    _spt = true;
+    pinControlRegister(PIN_SYS_SW0) = PORT_PULLUPEN_bm;
+    /* It takes time for the effects of PULLUP to appear. */
+    for (uint16_t _i = 0; ++_i;) {
+      if (digitalReadMacro(PIN_SYS_SW0)) {
+        _spt = false;
+        break;
+      }
+    }
+    pinControlRegister(PIN_SYS_SW0) = 0;
+  }
 
   _bootsize = FUSE_BOOTSIZE << 9;   /* x PROGMEM_PAGE_SIZE(512) */
 
   /* WDT restart causes user code to execute */
-  if (bit_is_set(GPR_GPR0, RSTCTRL_WDRF_bp)
-  || (digitalReadMacro(PIN_SYS_SW0) && spt != 0)) {
-    pinControlRegister(PIN_SYS_SW0) = 0;
+  if (bit_is_set(GPR_GPR0, RSTCTRL_WDRF_bp) || !_spt) {
     __asm__ __volatile__ ( "IJMP" :: "z" (_bootsize / 2) );
   }
 
