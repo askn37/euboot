@@ -11,10 +11,9 @@
 
 ### 最近の更新
 
-3.72.50 (26/08/28)
-
-- Firmware Update Mode （ブートローダー活性化）を開始する条件を厳格化
-  - 起動選択 SWに外付けの抵抗／キャパシタを追加していた場合、意図しない挙動になる問題に対応。
+- 3.72.51 (26/11/14)
+  - SDK 0.4.12 への適合
+  - USB記述子の訂正、libusbとの適合改善
 
 ## 開発の理由
 
@@ -218,6 +217,30 @@ USB ブートローダの最初のアドレスは、`PROGMEM` 領域の `PROGMEM
   - v0.4.0+ で avrdude @v8.1 を同梱。
 - [UPDI4AVR-USB](https://github.com/askn37/UPDI4AVR-USB) : OSS/OSHW Programmer for UPDI/TPI/PDI
 - [AVRDUDE](https://github.com/avrdudes/avrdude) @8.0+ （AVR-DUシリーズは8.0以降で正式サポート）
+
+## Linuxでの運用
+
+Linux distribution によって対応は異なるが、root権限がないと装置にアクセスできない場合は、次のような対応が必要になる。
+
+- 一般ユーザーが シリアルポート `/dev/ttyACM0` 等にアクセス可能となるには、`dialout` グループに参加する。
+
+```
+sudo usermod -aG dialout $USER
+```
+
+- 一般ユーザーが `avrdude` 等を介して `EDBG-based` プロトコルにアクセスするには、`udev`ルールを記述する。
+
+```
+# Append to /etc/udev/rules.d/99-avr-programmer.rules
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="0b15", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="0b12", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+```
+
+```
+# Post-operation
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+```
 
 ## Copyright and Contact
 

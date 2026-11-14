@@ -21,11 +21,10 @@ SDKURL = --additional-urls https://askn37.github.io/package_multix_zinnia_index.
 # FQBN : You only need to specify the menu items that differ from the defaults.
 
 FQBN = --fqbn "MultiX-Zinnia:modernAVR:AVRDU_noloader:\
-  01_variant=22_AVR64DU32,\
-	02_clock=11_20MHz,\
-	21_resetpin=02_gpio,\
-	27_fusefile=03_upload,\
-	52_macroapi=02_Withoutboot"
+  01_variant=AVR64DU32,\
+	21_resetpin=Gpio,\
+	27_fusefile=Upload,\
+	52_macroapi=WoStartup"
 
 # If you have MPLAB installed, the executable path will already be there.
 # If not, you should specify the path to the Arduino tools.

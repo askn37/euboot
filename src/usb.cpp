@@ -44,16 +44,12 @@ namespace USB {
     0x12, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x40,
     CONFIG_USB_VIDPID,      0x00, 0x01, 0x00, 0x02, 0x03, 0x01
   };
-  const uint8_t PROGMEM qualifier_descriptor[] = {
-    /* This descriptor selects Full-Speed (USB 2.0) ​​for USB 3.0. */
-    0x0A, 0x06, 0x00, 0x02, 0xEF, 0x02, 0x01, 0x40, 0x00, 0x00
-  };
   const uint8_t PROGMEM current_descriptor[] = {
     /* This descriptor is almost identical to the Xplained Mini series. */
     /* It does not allow for an dWire gateway. */
     0x09, 0x02, 0x29, 0x00, 0x01, 0x01, 0x00, 0x00, 0x32, /* Information Set#1 */
     0x09, 0x04, 0x00, 0x00, 0x02, 0x03, 0x00, 0x00, 0x00, /* Interface #0 HID  */
-    0x09, 0x21, 0x10, 0x01, 0x00, 0x01, 0x22, 0x23, 0x00, /*   HID using       */
+    0x09, 0x21, 0x10, 0x01, 0x00, 0x01, 0x22, 0x1F, 0x00, /*   HID using       */
     0x07, 0x05, 0x02, 0x03, 0x40, 0x00, 0x01,             /*   EP_DPO_OUT 0x02 */
     0x07, 0x05, 0x81, 0x03, 0x40, 0x00, 0x01,             /*   EP_DPI_IN  0x81 */
   };
@@ -61,10 +57,9 @@ namespace USB {
     /* This descriptor defines a HID report. */
     /* The maximum buffer size allowed in Full-Speed (USB 2.0) mode is 64 bytes. */
     0x06, 0x00, 0xFF, 0x09, 0x01, 0xA1, 0x01, 0x15,
-    0x00, 0x26, 0xFF, 0x00, 0x75, 0x08, 0x96, 0x40,
-    0x00, 0x09, 0x01, 0x81, 0x02, 0x96, 0x40, 0x00,
-    0x09, 0x01, 0x91, 0x02, 0x95, 0x04, 0x09, 0x01,
-    0xB1, 0x02, 0xC0
+    0x00, 0x26, 0xFF, 0x00, 0x75, 0x08, 0x95, 0x40,
+    0x09, 0x01, 0x81, 0x02, 0x09, 0x01, 0x91, 0x02,
+    0x95, 0x04, 0x09, 0x01, 0xB1, 0x02, 0xC0
   };
 
   const EP_TABLE_t PROGMEM ep_init = {
@@ -108,10 +103,6 @@ namespace USB {
       _pgmem = (uint8_t*)&current_descriptor;
       _size = sizeof(current_descriptor);
     }
-    else if (_type == 0x06) {     /* QUALIFIER */
-      _pgmem = (uint8_t*)&qualifier_descriptor;
-      _size = sizeof(qualifier_descriptor);
-    }
     else if (_type == 0x21) {     /* HID */
       _pgmem = (uint8_t*)&current_descriptor + 18;
       _size = 9;
@@ -122,10 +113,7 @@ namespace USB {
     }
     else if (_index == 0x0300) {  /* LANGUAGE */
       _size = 4;
-      *_buffer++ = 4;
-      *_buffer++ = 3;
-      *_buffer++ = 0x09;
-      *_buffer++ = 0x04;
+      *_buffer = 0x04090304UL;
       return _size;
     }
     else {
@@ -138,8 +126,6 @@ namespace USB {
       }
       *_buffer++ = (uint8_t)_size;
       *_buffer++ = 3;
-      if (_size) memcpy_P(_buffer, _pgmem, _size - 2);
-      return _size;
     }
     if (_size) memcpy_P(_buffer, _pgmem, _size);
     return _size;
@@ -178,6 +164,11 @@ namespace USB {
     EP_RES.MCNT = 0;
     loop_until_bit_is_clear(USB0_INTFLAGSB, USB_RMWBUSY_bp);
     USB_EP_STATUS_CLR(USB_EP_RES) = ~USB_TOGGLE_bm;
+  }
+
+  void ep_setup_stalled (void) {
+    bit_set(EP_RES.CTRL, USB_DOSTALL_bp);
+    USB0_INTFLAGSB |= USB_EPSETUP_bp;
   }
 
   void ep_dpi_listen (void) {
@@ -304,11 +295,9 @@ namespace USB {
     else if (bmRequestType == (1 << 5)) {
       _listen = request_class();
     }
-    if (_listen) {
-      ep_res_listen();
-      ep_req_listen();
-    }
-    USB0_INTFLAGSB |= USB_EPSETUP_bp;
+    if (!_listen) ep_setup_stalled();
+    ep_res_listen();
+    ep_req_listen();
   }
 
   /*** This process is equivalent to a bus interrupt. ***/
@@ -327,6 +316,12 @@ namespace USB {
         SYS::reboot();
       }
       bit_set(busstate, USB_RESET_bp);
+    }
+    if (bit_is_set(busstate, USB_STALLED_bp)) {
+      loop_until_bit_is_clear(USB0_INTFLAGSB, USB_RMWBUSY_bp);
+      bit_clear(EP_RES.CTRL, USB_DOSTALL_bp);
+      USB_EP_STATUS_CLR(USB_EP_RES) = 0;
+      USB_EP_STATUS_CLR(USB_EP_REQ) = 0;
     }
     if (bit_is_set(busstate, USB_RESET_bp)) {
       setup_device(false);

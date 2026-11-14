@@ -59,7 +59,7 @@
 #define HW_VER   52
 #define FW_MAJOR 3
 #define FW_MINOR 72
-#define FW_REL   50
+#define FW_REL   51
 
 /*
  * Bootloader enable switch
