@@ -130,6 +130,14 @@ int main (void) {
 
   /* Perform a software reset if GPR is zero */
   if (GPR_GPR0 == 0) _PROTECTED_WRITE(RSTCTRL_SWRR, 1);
+
+  /* Write zero values ​​to the SRAM in case the subsequent operations are interrupted. */
+  *(uint16_t*)(RAMEND - 1) = 0;
+
+  /* If the system has started up via a power-on reset,        */
+  /* it proceeds to detect whether SW0 is being pressed.       */
+  /* This process requires a certain amount of time to account */
+  /* for delays introduced by resistors and capacitors.        */
   if (GPR_GPR0 == RSTCTRL_PORF_bm) {
     _spt = true;
     pinControlRegister(PIN_SYS_SW0) = PORT_PULLUPEN_bm;

@@ -320,8 +320,6 @@ namespace USB {
     if (bit_is_set(busstate, USB_STALLED_bp)) {
       loop_until_bit_is_clear(USB0_INTFLAGSB, USB_RMWBUSY_bp);
       bit_clear(EP_RES.CTRL, USB_DOSTALL_bp);
-      USB_EP_STATUS_CLR(USB_EP_RES) = 0;
-      USB_EP_STATUS_CLR(USB_EP_REQ) = 0;
     }
     if (bit_is_set(busstate, USB_RESET_bp)) {
       setup_device(false);
