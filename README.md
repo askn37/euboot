@@ -11,9 +11,10 @@
 
 ### Recent Updates
 
-- 3.72.51 (26/11/14)
-  - Compliance with SDK 0.4.12
-  - Corrected USB descriptor, improved compatibility with libusb
+3.72.51 (26/11/14)
+- Compliance with SDK 0.4.12
+- Corrected USB descriptor, improved compatibility with libusb
+- Removed debugging code, as it is no longer functioning properly.
 
 ## Reasons for development
 

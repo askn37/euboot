@@ -18,7 +18,6 @@
 
 #include <avr/io.h>
 #include "api/macro_api.h"  /* interrupts, initVariant */
-#include "peripheral.h"     /* import Serial (Debug) */
 #include "prototype.h"
 
 #define pinLogicPush(PIN) openDrainWriteMacro(PIN, LOW)
@@ -32,8 +31,6 @@ namespace SYS {
    * Always run it after the USB has stopped.
    */
   void reboot (void) {
-    D0PRINTF("<REBOOT>\r\n");
-    DFLUSH();
     _PROTECTED_WRITE(RSTCTRL_SWRR, 1);
   }
 

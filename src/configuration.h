@@ -25,20 +25,6 @@
  * Global configuration *
  ***********************/
 
-/*
- * When the DEBUG symbol is enabled, DBG-COM is enabled.
- *
- *  If enabled, the application start address will be set to a different value than normal.
- *
- *    NDEBUG  0x0A00  (2560)  BOOTSIZE= 5 sectors
- *    DEBUG1  0x2000  (8192)  BOOTSIZE=16 sectors
- *
- *  The DEBUG=0 output is not normally used,
- *  but can be used to filter only user-defined output.
- */
-
-// #define DEBUG 2
-
 /*** CONFIG_SYS ***/
 
 /*

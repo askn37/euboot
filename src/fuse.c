@@ -37,12 +37,6 @@
   #define ENABLE_SYS_RESET 0
 #endif
 
-#if defined(DEBUG) && !defined(NDEBUG)
-  #define APPSTART 16
-#else
-  #define APPSTART 5
-#endif
-
 FUSES = {
     .WDTCFG   = FUSE0_DEFAULT,
     .BODCFG   = FUSE1_DEFAULT,
@@ -50,7 +44,7 @@ FUSES = {
     .SYSCFG0  = FUSE5_DEFAULT | FUSE_EESAVE_bm | ENABLE_SYS_RESET,
     .SYSCFG1  = FUSE6_DEFAULT,
     .CODESIZE = FUSE7_DEFAULT,  /* 0=All application code */
-    .BOOTSIZE = APPSTART,
+    .BOOTSIZE = 5,
     .PDICFG   = FUSE10_DEFAULT  /* Never change it */
 };
 

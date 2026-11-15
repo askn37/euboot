@@ -21,57 +21,12 @@
 #ifndef F_CPU
   #define F_CPU 20000000L
 #endif
-#ifndef CONSOLE_BAUD
-  #define CONSOLE_BAUD 500000L
-#endif
 
 #include <avr/io.h>
 #include <stddef.h>
 #include <setjmp.h>
 #include <api/memspace.h>
 #include "configuration.h"
-
-// #undef DEBUG
-// #define DEBUG 3
-
-#undef Serial
-#define DFLUSH()
-#define D0PRINTF(FMT, ...)
-#define D1PRINTF(FMT, ...)
-#define D2PRINTF(FMT, ...)
-#define D3PRINTF(FMT, ...)
-#define D0PRINTHEX(P, ...)
-#define D1PRINTHEX(P, ...)
-#define D2PRINTHEX(P, ...)
-#define D3PRINTHEX(P, ...)
-#if defined(DEBUG)
-  #include "peripheral.h" /* from Micro_API : import Serial (Debug) */
-  #define Serial Serial1C /* PIN_PD6:TxD, PIN_PD7:RxD */
-  #undef  DFLUSH
-  #define DFLUSH() Serial.flush()
-  #undef  DPRINTF
-  #define DPRINTF(FMT, ...) Serial.printf(F(FMT), ##__VA_ARGS__)
-  #undef  DPRINTHEX
-  #define DPRINTHEX(P, ...) Serial.printHex((P), ##__VA_ARGS__).ln()
-  #if (DEBUG >= 1)
-    #undef D1PRINTF
-    #define D1PRINTF DPRINTF
-    #undef  D1PRINTHEX
-    #define D1PRINTHEX DPRINTHEX
-  #endif
-  #if (DEBUG >= 2)
-    #undef  D2PRINTF
-    #define D2PRINTF DPRINTF
-    #undef  D2PRINTHEX
-    #define D2PRINTHEX DPRINTHEX
-  #endif
-  #if (DEBUG >= 3)
-    #undef  D3PRINTF
-    #define D3PRINTF DPRINTF
-    #undef  D3PRINTHEX
-    #define D3PRINTHEX DPRINTHEX
-  #endif
-#endif
 
 #define PACKED __attribute__((__packed__))
 #define USED   __attribute__((__used__))

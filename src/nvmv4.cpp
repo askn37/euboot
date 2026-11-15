@@ -18,8 +18,8 @@
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>   /* PROGMEM memcpy_P */
+#include <string.h>         /* memcpy */
 #include "api/capsule.h"    /* _CAPS macro */
-#include "peripheral.h"     /* import Serial (Debug) */
 #include "configuration.h"
 #include "prototype.h"
 
@@ -119,7 +119,6 @@ namespace NVM::V4 {
     uint8_t   m_type = packet.out.bMType;
     uint16_t _dwAddr = packet.out.dwAddr;     /* The high-order word is ignored. */
     size_t  _wLength = packet.out.dwLength;
-    DFLUSH();
     if (m_type == 0xB0) {
       /* MTYPE_FLASH_PAGE (PROGMEM) */
       if (_dwAddr < _bootsize) return 1;
@@ -153,42 +152,32 @@ namespace NVM::V4 {
     size_t _rspsize = 0;
     uint8_t _cmd = packet.out.cmd;
     if (_cmd == 0x10) {             /* CMD3_SIGN_ON */
-      D1PRINTF(" UPDI_SIGN_ON=EXT:%02X\r\n", packet.out.bMType);
       memcpy_P(&packet.in.data[0], &_sib[0], 4);
       packet.in.res = 0x84;         /* RSP3_DATA */
       return 5;
     }
     else if (_cmd == 0x11) {        /* CMD3_SIGN_OFF */
-      D1PRINTF(" UPDI_SIGN_OFF\r\n");
       /* If UPDI control has failed, RSP3_OK is always returned. */
       _rspsize = 1;
     }
     else if (_cmd == 0x15) {        /* CMD3_ENTER_PROGMODE */
-      D1PRINTF(" UPDI_ENTER_PROG\r\n");
       /* On failure, RSP3_OK is returned if a UPDI connection is available. */
       _rspsize = 1;
     }
     else if (_cmd == 0x16) {        /* CMD3_LEAVE_PROGMODE */
-      D1PRINTF(" UPDI_LEAVE_PROG\r\n");
       /* There is nothing to do. */
       /* The actual termination process is delayed until CMD3_SIGN_OFF. */
       _rspsize = 1;
     }
     else if (_cmd == 0x20) {        /* CMD3_ERASE_MEMORY */
-      D1PRINTF(" UPDI_ERASE=%02X:%06lX\r\n",
-        packet.out.bEType, packet.out.dwPageAddr);
       _rspsize = erase_memory();
     }
     else if (_cmd == 0x21) {        /* CMD3_READ_MEMORY */
-      D1PRINTF(" UPDI_READ=%02X:%06lX:%04X\r\n", packet.out.bMType,
-        packet.out.dwAddr, (size_t)packet.out.dwLength);
       _rspsize = read_memory();
       packet.in.res = 0x184;        /* RSP3_DATA */
       return _rspsize;
     }
     else if (_cmd == 0x23) {        /* CMD3_WRITE_MEMORY */
-      D1PRINTF(" UPDI_WRITE=%02X:%06lX:%04X\r\n", packet.out.bMType,
-        packet.out.dwAddr, (size_t)packet.out.dwLength);
       _rspsize = write_memory();
     }
     packet.in.res = _rspsize ? 0x80 : 0xA0;     /* RSP3_OK : RSP3_FAILED */

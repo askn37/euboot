@@ -21,7 +21,6 @@
 #include <string.h>         /* memcpy */
 #include "api/macro_api.h"  /* ATOMIC_BLOCK */
 #include "api/capsule.h"    /* _CAPS macro */
-#include "peripheral.h"     /* import Serial (Debug) */
 #include "configuration.h"
 #include "prototype.h"
 
@@ -96,7 +95,6 @@ namespace USB {
       _pgmem = (uint8_t*)&device_descriptor;
       _size = sizeof(device_descriptor);
       memcpy_P(_buffer, _pgmem, _size);
-      D1PRINTF(" VID:PID=%04X:%04X\r\n", _CAPS16(_buffer[8])->word, _CAPS16(_buffer[10])->word);
       return _size;
     }
     else if (_type == 0x02) {     /* CONFIGURATION */
@@ -200,7 +198,6 @@ namespace USB {
       EP_RES.CNT = 2;
     }
     else if (bRequest == 0x01) {  /* CLEAR_FEATURE */
-      D1PRINTF(" CF=%02X:%02X\r\n", EP_MEM.req_data.wValue, EP_MEM.req_data.wIndex);
       if (0 == (uint8_t)EP_MEM.req_data.wValue) {
         /* Expects an endpoint number to be passed in. Swaps the high and low */
         /* nibbles to make it a representation of the USB controller. */
@@ -212,7 +209,6 @@ namespace USB {
     }
     else if (bRequest == 0x04) {  /* SET_FEATURE */
       /* If used, it will be ignored. */
-      D1PRINTF(" SF=%02X:%02X\r\n", EP_MEM.req_data.wValue, EP_MEM.req_data.wIndex);
       EP_RES.CNT = 0;
     }
     else if (bRequest == 0x05) {  /* SET_ADDRESS */
@@ -220,7 +216,6 @@ namespace USB {
       ep_res_listen();
       ep_res_pending();
       USB0_ADDR = _addr;
-      D1PRINTF(" USB0_ADDR=%d\r\n", _addr);
       EP_RES.CNT = 0;
     }
     else if (bRequest == 0x06) {  /* GET_DESCRIPTOR */
@@ -231,7 +226,6 @@ namespace USB {
     }
     else if (bRequest == 0x08) {  /* GET_CONFIGURATION */
       EP_MEM.res_data[0] = _set_config;
-      D1PRINTF("<GC:%02X>\r\n", _set_config);
       EP_RES.CNT = 1;
     }
     else if (bRequest == 0x09) {  /* SET_CONFIGURATION */
@@ -239,22 +233,18 @@ namespace USB {
       _set_config = (uint8_t)EP_MEM.req_data.wValue;
       bit_set(GPCONF, GPCONF_USB_bp);
       _led_next = 0b11110000;
-      D1PRINTF("<READY:%02X>\r\n", _set_config);
       EP_RES.CNT = 0;
     }
     else if (bRequest == 0x0A) {  /* GET_INTREFACE */
       /* It seems not to be used. */
-      D1PRINTF("<SI:0>\r\n");
       EP_MEM.res_data[0] = 0;
       EP_RES.CNT = 1;
     }
     else if (bRequest == 0x0B) {  /* SET_INTREFACE */
       /* It seems not to be used. */
-      D1PRINTF("<GI:%02X>\r\n", EP_MEM.req_data.wValue);
       EP_RES.CNT = 0;
     }
     else {
-      D2PRINTF(" RQ=%02X\r\n", bRequest);
       _listen = false;
     }
     return _listen;
@@ -267,7 +257,6 @@ namespace USB {
     if (bRequest == 0x0A) {       /* SET_IDLE */
       /* This is a HID Compliance Class Request. */
       /* It is called but not used. */
-      D1PRINTF(" IDL=%02X\r\n", (uint8_t)EP_MEM.req_data.wValue);
       EP_RES.CNT = 0;
     }
     else {
@@ -282,9 +271,6 @@ namespace USB {
   void handling_control_transactions (void) {
     bool _listen = false;
     uint8_t bmRequestType = EP_MEM.req_data.bmRequestType;
-    D2PRINTF("RQ=%02X:%04X:%02X:%02X:%04X:%04X:%04X\r\n",
-      EP_REQ.STATUS, EP_REQ.CNT, EP_MEM.req_data.bmRequestType, EP_MEM.req_data.bRequest,
-      EP_MEM.req_data.wValue, EP_MEM.req_data.wIndex, EP_MEM.req_data.wLength);
     /* Accepts subsequent EP0_DATA packets as needed. */
     if (bit_is_clear(bmRequestType, 7)) ep_req_listen();
     bmRequestType &= (3 << 5);
@@ -309,8 +295,6 @@ namespace USB {
       /* This implementation does not transition to power saving mode. */
       /* This is only passed when the USB cable is unplugged. */
       if (bit_is_set(GPCONF, GPCONF_USB_bp)) {
-        D1PRINTF("<BUS=%02X>\r\n", busstate);
-        DFLUSH();
         /* System reboot */
         SYS::reboot();
       }
