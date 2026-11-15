@@ -212,13 +212,6 @@ USB ブートローダの最初のアドレスは、`PROGMEM` 領域の `PROGMEM
 
 > 実際の使用例については、[[FlashNVM ツールリファレンス]](https://github.com/askn37/askn37.github.io/wiki/FlashNVM)を参照のこと。
 
-## Related link and documentation
-
-- [MultiX Zinnia Product SDK [modernAVR]](https://github.com/askn37/multix-zinnia-sdk-modernAVR)
-  - v0.4.0+ で avrdude @v8.1 を同梱。
-- [UPDI4AVR-USB](https://github.com/askn37/UPDI4AVR-USB) : OSS/OSHW Programmer for UPDI/TPI/PDI
-- [AVRDUDE](https://github.com/avrdudes/avrdude) @8.0+ （AVR-DUシリーズは8.0以降で正式サポート）
-
 ## Linuxでの運用
 
 Linux distribution によって対応は異なるが、root権限がないと装置にアクセスできない場合は、次のような対応が必要になる。
@@ -242,6 +235,13 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="0b12", MODE="0660"
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
+
+## Related link and documentation
+
+- [MultiX Zinnia Product SDK [modernAVR]](https://github.com/askn37/multix-zinnia-sdk-modernAVR)
+  - v0.4.0+ で avrdude @v8.1 を同梱。
+- [UPDI4AVR-USB](https://github.com/askn37/UPDI4AVR-USB) : OSS/OSHW Programmer for UPDI/TPI/PDI
+- [AVRDUDE](https://github.com/avrdudes/avrdude) @8.0+ （AVR-DUシリーズは8.0以降で正式サポート）
 
 ## Copyright and Contact
 
