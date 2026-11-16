@@ -34,6 +34,8 @@
 #define RODATA __attribute__((__progmem__))
 #define NOINIT __attribute__((section(".noinit")))
 
+#define bcdDBYTE(x,y) (((x/10))<<12)|((x%10)<<8)|((y/10)<<4)|(y%10)
+
 #define USB_EP_SIZE_gc(x)  ((x <= 8 ) ? USB_BUFSIZE_DEFAULT_BUF8_gc :\
                             (x <= 16) ? USB_BUFSIZE_DEFAULT_BUF16_gc:\
                             (x <= 32) ? USB_BUFSIZE_DEFAULT_BUF32_gc:\

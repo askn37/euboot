@@ -33,7 +33,8 @@
  *  The default value is MCHP:HIDC (04D8:0B12)
  */
 
-#define CONFIG_USB_VIDPID 0xD8, 0x04, 0x12, 0x0B
+#define USB_VENDOR_ID   0x04D8  /* 0x04D8=MCHP VID. */
+#define USB_PRODUCT_ID  0x0B12  /* PID 0x0010-0x002F reserved for testing/non-public demos. */
 
 /*
  * JTAGICE3 FW versions:

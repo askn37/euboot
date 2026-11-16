@@ -23,6 +23,7 @@
 #include "api/capsule.h"    /* _CAPS macro */
 #include "configuration.h"
 #include "prototype.h"
+#include "USB_Utils.h"
 
 /*
  * NOTE:
@@ -38,27 +39,101 @@ namespace USB {
 
   const wchar_t PROGMEM mstring[] = L"euboot:CMSIS-DAP:EDBG";
 
-  const uint8_t PROGMEM device_descriptor[] = {
+  const USB_Device_Descriptor_t PROGMEM device_descriptor = {
     /* This device descriptor contains. */
-    0x12, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x40,
-    CONFIG_USB_VIDPID,      0x00, 0x01, 0x00, 0x02, 0x03, 0x01
+      .bLength              = sizeof(USB_Device_Descriptor_t)
+    , .bDescriptorType      = bDescriptorType_DEVICE
+    , .bcdUSB               = bcdUSB_2
+    , .bDeviceClass         = bClassCode_Composite
+    , .bDeviceSubClass      = bSubClassCode_Composite
+    , .bDeviceProtocol      = bProtocolCode_Composite
+    , .bMaxPacketSize0      = 64
+    , .idVendor             = USB_VENDOR_ID
+    , .idProduct            = USB_PRODUCT_ID
+    , .bcdDevice            = bcdDBYTE(FW_MAJOR,FW_MINOR)
+    , .iManufacturer        = 1         // sManufacturer
+    , .iProduct             = 1         // sProduct
+    , .iSerialNumber        = 1         // iStrings
+    , .bNumConfigurations   = 1
   };
-  const uint8_t PROGMEM current_descriptor[] = {
-    /* This descriptor is almost identical to the Xplained Mini series. */
-    /* It does not allow for an dWire gateway. */
-    0x09, 0x02, 0x29, 0x00, 0x01, 0x01, 0x00, 0x00, 0x32, /* Information Set#1 */
-    0x09, 0x04, 0x00, 0x00, 0x02, 0x03, 0x00, 0x00, 0x00, /* Interface #0 HID  */
-    0x09, 0x21, 0x10, 0x01, 0x00, 0x01, 0x22, 0x1F, 0x00, /*   HID using       */
-    0x07, 0x05, 0x02, 0x03, 0x40, 0x00, 0x01,             /*   EP_DPO_OUT 0x02 */
-    0x07, 0x05, 0x81, 0x03, 0x40, 0x00, 0x01,             /*   EP_DPI_IN  0x81 */
-  };
+
   const uint8_t PROGMEM report_descriptor[] = {
     /* This descriptor defines a HID report. */
     /* The maximum buffer size allowed in Full-Speed (USB 2.0) mode is 64 bytes. */
-    0x06, 0x00, 0xFF, 0x09, 0x01, 0xA1, 0x01, 0x15,
-    0x00, 0x26, 0xFF, 0x00, 0x75, 0x08, 0x95, 0x40,
-    0x09, 0x01, 0x81, 0x02, 0x09, 0x01, 0x91, 0x02,
-    0x95, 0x04, 0x09, 0x01, 0xB1, 0x02, 0xC0
+    HR_wUsage_Page(0xFF00),
+    HR_bUsage(1),
+    HR_bCollection(1),
+      HR_bLogical_Minimum_0,
+      HR_wLogical_Maximum(255),
+      HR_bReport_Size(8),
+      HR_bReport_Count(64),
+      HR_bUsage(1),
+      HR_bInput(2),
+      HR_bUsage(1),
+      HR_bOutput(2),
+      HR_bReport_Count(4),
+      HR_bUsage(1),
+      HR_bFeature(2),
+    HR_EndCollection
+  };
+
+  typedef struct {
+    USB_Configuration_Descriptor_t                USB_Configuration_Descriptor_0;
+    USB_Interface_Descriptor_t                    USB_Interface_Descriptor_0;
+      USB_HID_Class_Descriptor_t                  USB_HID_Class_Descriptor_0;
+        USB_HID_Item_Descriptors_List_t           USB_HID_Item_Descriptor_0[1];
+      USB_Endpoint_Descriptor_t                   USB_Endpoint_Descriptor_81;
+      USB_Endpoint_Descriptor_t                   USB_Endpoint_Descriptor_02;
+  } USB_Genelal_Configuration_Descriptor_0_t;
+
+  const USB_Genelal_Configuration_Descriptor_0_t PROGMEM current_descriptor = {
+    .USB_Configuration_Descriptor_0 = {
+        .bLength                = sizeof(USB_Configuration_Descriptor_t)
+      , .bDescriptorType        = bDescriptorType_CONFIGURATION
+      , .wTotalLength           = sizeof(USB_Genelal_Configuration_Descriptor_0_t)
+      , .bNumInterfaces         = 1     // Interface x 1
+      , .bConfigurationValue    = 1     // Configuration#1
+      , .iConfiguration         = 1     // iStrings
+      , .bmAttributes           = 0
+      , .bMaxPower              = 100 / 2
+    },
+    .USB_Interface_Descriptor_0 = {
+        .bLength                = sizeof(USB_Interface_Descriptor_t)
+      , .bDescriptorType        = bDescriptorType_INTERFACE
+      , .bInterfaceNumber       = 0     // Interface#0
+      , .bAlternateSetting      = 0     // not used
+      , .bNumEndpoints          = 2     // 0x81 + 0x02
+      , .bInterfaceClass        = bClassCode_Human_Interface_Device
+      , .bInterfaceSubClass     = bSubClassCode_None
+      , .bInterfaceProtocol     = bProtocolCode_None
+      , .iInterface             = 0     // iStrings
+    },
+    .USB_HID_Class_Descriptor_0 = {
+        .bLength                = sizeof(USB_HID_Class_Descriptor_t) + sizeof(USB_HID_Item_Descriptors_List_t) * 1
+      , .bDescriptorType        = bDescriptorType_HID_CLASS
+      , .bcdHID                 = 0x111
+      , .bCountryCode           = 0
+      , .bNumDescriptors        = 1
+    },
+    .USB_HID_Item_Descriptor_0 = {
+      { bDescriptorType_HID_REPORT, sizeof(report_descriptor) }
+    },
+    .USB_Endpoint_Descriptor_81 = {
+        .bLength                = sizeof(USB_Endpoint_Descriptor_t)
+      , .bDescriptorType        = bDescriptorType_ENDPOINT
+      , .bEndpointAddress       = 0x81
+      , .bmAttributes           = bmEP_Type_Interrupt
+      , .wMaxPacketSize         = 64
+      , .bInterval              = 1
+    },
+    .USB_Endpoint_Descriptor_02 = {
+        .bLength                = sizeof(USB_Endpoint_Descriptor_t)
+      , .bDescriptorType        = bDescriptorType_ENDPOINT
+      , .bEndpointAddress       = 0x02
+      , .bmAttributes           = bmEP_Type_Interrupt
+      , .wMaxPacketSize         = 64
+      , .bInterval              = 1
+    }
   };
 
   const EP_TABLE_t PROGMEM ep_init = {
@@ -114,14 +189,9 @@ namespace USB {
       *_buffer = 0x04090304UL;
       return _size;
     }
-    else {
-      switch (_index) {
-        case 0x0302:
-        case 0x0303:
-          _pgmem = (uint8_t*)&mstring;
-          _size = sizeof(mstring);
-          break;
-      }
+    else if (_index == 0x0301) {  /* iString */
+      _pgmem = (uint8_t*)&mstring;
+      _size = sizeof(mstring);
       *_buffer++ = (uint8_t)_size;
       *_buffer++ = 3;
     }
@@ -252,15 +322,13 @@ namespace USB {
 
   /*** class request processing. ***/
   bool request_class (void) {
-    bool _listen = true;
+    bool _listen = false;
     uint8_t bRequest = EP_MEM.req_data.bRequest;
     if (bRequest == 0x0A) {       /* SET_IDLE */
       /* This is a HID Compliance Class Request. */
       /* It is called but not used. */
       EP_RES.CNT = 0;
-    }
-    else {
-      _listen = false;
+      _listen = true;
     }
     return _listen;
   }
