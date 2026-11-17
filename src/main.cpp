@@ -22,7 +22,6 @@
 #include <avr/io.h>
 #include <stddef.h>
 #include "api/macro_api.h"  /* interrupts, initVariant */
-#include "peripheral.h"     /* import Serial (Debug) */
 #include "configuration.h"
 #include "prototype.h"
 
@@ -130,6 +129,14 @@ int main (void) {
 
   /* Perform a software reset if GPR is zero */
   if (GPR_GPR0 == 0) _PROTECTED_WRITE(RSTCTRL_SWRR, 1);
+
+  /* Write zero values ​​to the SRAM in case the subsequent operations are interrupted. */
+  *(uint16_t*)(RAMEND - 1) = 0;
+
+  /* If the system has started up via a power-on reset,        */
+  /* it proceeds to detect whether SW0 is being pressed.       */
+  /* This process requires a certain amount of time to account */
+  /* for delays introduced by resistors and capacitors.        */
   if (GPR_GPR0 == RSTCTRL_PORF_bm) {
     _spt = true;
     pinControlRegister(PIN_SYS_SW0) = PORT_PULLUPEN_bm;
@@ -162,17 +169,6 @@ int main (void) {
   digitalWriteMacro(PIN_SYS_LED0, TOGGLE);
 #endif
 
-#if defined(DEBUG)
-  Serial.begin(CONSOLE_BAUD);
-  delay_millis(600);
-  D1PRINTF("\n<startup>\r\n");
-  D1PRINTF("F_CPU = %ld\r\n", F_CPU);
-  D1PRINTF("_AVR_IOXXX_H_ = " _AVR_IOXXX_H_ "\r\n");
-  D1PRINTF("__AVR_ARCH__ = %d\r\n", __AVR_ARCH__);
-  D1PRINTF("BOOTSIZE = %d, 0x%04X\r\n", FUSE_BOOTSIZE, _bootsize);
-  DFLUSH();
-#endif
-
   _led_next = 0b11000000;
   _led_mask = 0;
 
@@ -191,10 +187,7 @@ int main (void) {
   USB::setup_device(true);
 
   digitalWriteMacro(PIN_SYS_LED0, TOGGLE);
-  D1PRINTF("<WAITING>\r\n");
-  DFLUSH();
   while (true) {
-    DFLUSH();
     if (bit_is_clear(GPCONF, GPCONF_FAIL_bp)) wdt_reset();
 
     if (bit_is_set(TCA0_SINGLE_INTFLAGS, TCA_SINGLE_CMP0_bp)) {

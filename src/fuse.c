@@ -37,10 +37,8 @@
   #define ENABLE_SYS_RESET 0
 #endif
 
-#if defined(DEBUG) && !defined(NDEBUG)
-  #define APPSTART 16
-#else
-  #define APPSTART 5
+#ifndef APPSTART
+#define APPSTART 5
 #endif
 
 FUSES = {

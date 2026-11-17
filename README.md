@@ -11,10 +11,10 @@
 
 ### Recent Updates
 
-3.72.50 (26/08/28)
-
-- Tightened the conditions for entering Firmware Update Mode (bootloader activation).
-  - Fixed an issue where unintended behavior occurred when external resistors or capacitors were connected to the boot selection switch.
+3.72.51 (26/11/14)
+- Compliance with SDK 0.4.12
+- Corrected USB descriptor, improved compatibility with libusb
+- Removed debugging code, as it is no longer functioning properly.
 
 ## Reasons for development
 
@@ -209,6 +209,30 @@ The first address of the USB bootloader starts at `PROGMEM_START` in the `PROGME
 These can be used to erase/rewrite the FLASH in the CODE/APPEND and BOOTROW areas using the BOOT area protection privilege.
 
 > For actual usage examples, see [[FlashNVM Tool Reference]](https://github.com/askn37/askn37.github.io/wiki/FlashNVM).
+
+## Operation on Linux
+
+Depending on the Linux distribution, you may need to take specific steps if access to the device requires root privileges.
+
+- To allow a regular user to access serial ports such as `/dev/ttyACM0`, add the user to the `dialout` group:
+
+```
+sudo usermod -aG dialout $USER
+```
+
+- To allow a regular user to access EDBG-based protocols (e.g., via `avrdude`), create a `udev` rule:
+
+```
+# Append to /etc/udev/rules.d/99-avr-programmer.rules
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="0b15", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="0b12", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+```
+
+```
+# Post-operation
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+```
 
 ## Related link and documentation
 

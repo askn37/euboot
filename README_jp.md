@@ -11,10 +11,10 @@
 
 ### 最近の更新
 
-3.72.50 (26/08/28)
-
-- Firmware Update Mode （ブートローダー活性化）を開始する条件を厳格化
-  - 起動選択 SWに外付けの抵抗／キャパシタを追加していた場合、意図しない挙動になる問題に対応。
+3.72.51 (26/11/14)
+- SDK 0.4.12 への適合
+- USB記述子の訂正、libusbとの適合改善
+- もはや十分機能しなくなっているため、デバッグ用コードを除去
 
 ## 開発の理由
 
@@ -211,6 +211,30 @@ USB ブートローダの最初のアドレスは、`PROGMEM` 領域の `PROGMEM
 これらは BOOT 領域保護特権を使用して、CODE/APPEND および BOOTROW 領域のフラッシュを消去/書き換えるために使用できる。
 
 > 実際の使用例については、[[FlashNVM ツールリファレンス]](https://github.com/askn37/askn37.github.io/wiki/FlashNVM)を参照のこと。
+
+## Linuxでの運用
+
+Linux distribution によって対応は異なるが、root権限がないと装置にアクセスできない場合は、次のような対応が必要になる。
+
+- 一般ユーザーが シリアルポート `/dev/ttyACM0` 等にアクセス可能となるには、`dialout` グループに参加する。
+
+```
+sudo usermod -aG dialout $USER
+```
+
+- 一般ユーザーが `avrdude` 等を介して `EDBG-based` プロトコルにアクセスするには、`udev`ルールを記述する。
+
+```
+# Append to /etc/udev/rules.d/99-avr-programmer.rules
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="0b15", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="0b12", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+```
+
+```
+# Post-operation
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+```
 
 ## Related link and documentation
 

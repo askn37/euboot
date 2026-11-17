@@ -25,20 +25,6 @@
  * Global configuration *
  ***********************/
 
-/*
- * When the DEBUG symbol is enabled, DBG-COM is enabled.
- *
- *  If enabled, the application start address will be set to a different value than normal.
- *
- *    NDEBUG  0x0A00  (2560)  BOOTSIZE= 5 sectors
- *    DEBUG1  0x2000  (8192)  BOOTSIZE=16 sectors
- *
- *  The DEBUG=0 output is not normally used,
- *  but can be used to filter only user-defined output.
- */
-
-// #define DEBUG 2
-
 /*** CONFIG_SYS ***/
 
 /*
@@ -47,7 +33,8 @@
  *  The default value is MCHP:HIDC (04D8:0B12)
  */
 
-#define CONFIG_USB_VIDPID 0xD8, 0x04, 0x12, 0x0B
+#define USB_VENDOR_ID   0x04D8  /* 0x04D8=MCHP VID. */
+#define USB_PRODUCT_ID  0x0B12  /* PID 0x0010-0x002F reserved for testing/non-public demos. */
 
 /*
  * JTAGICE3 FW versions:
@@ -59,7 +46,7 @@
 #define HW_VER   52
 #define FW_MAJOR 3
 #define FW_MINOR 72
-#define FW_REL   50
+#define FW_REL   51
 
 /*
  * Bootloader enable switch
